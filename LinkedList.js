@@ -30,6 +30,31 @@ class LinkedList {
     }
 
     /**
+     * Swaps two nodes in the linked list.
+     * Updates the next properties of the two nodes and their neighbours.
+     * Also updates the head and tail properties if either of the nodes being swapped is the head or tail.
+     * @param {Node} node1 - The first node to be swapped.
+     * @param {Node} node2 - The second node to be swapped.
+     */
+    swapNodes(node1, node2) {
+        const node1Next = node1.next;
+        node1.next = node2.next;
+        node2.next = node1Next;
+
+        // Update the head and tail if necessary
+        if (node1 === this.head) {
+            this.head = node2;
+        } else if (node2 === this.head) {
+            this.head = node1;
+        }
+        if (node1 === this.tail) {
+            this.tail = node2;
+        } else if (node2 === this.tail) {
+            this.tail = node1;
+        }
+    }
+
+    /**
      * Removes the first occurrence of a node that satisfies the given callback function from the linked list.
      * Iterates through the list and checks if the callback function returns true for the next node.
      * If a match is found, the next node is skipped and the size of the list is decremented.
@@ -80,7 +105,7 @@ class LinkedList {
      * @returns {boolean} - True if the list is empty, false otherwise.
      */
     isEmpty() {
-        return size === 0;
+        return this.size === 0;
     }
 
     /**
@@ -88,7 +113,7 @@ class LinkedList {
      * @returns {number} - The size of the linked list.
      */
     getSize() {
-        return size;
+        return this.size;
     }
 
     /**
@@ -113,19 +138,4 @@ class Node {
     }
 }
 
-const list = new LinkedList();
-for (let i = 1; i <= 15; i++) {
-    list.add(i);
-}
-list.printAsArray();
-
-const trainList = new LinkedList();
-for (let i = 1; i <= 15; i++) {
-    const cart = {
-        id: i,
-        name: `Cart ${i}`,
-        length: Math.floor(Math.random() * 10) + 1,
-    };
-    trainList.add(cart);
-}
-trainList.printAsArray();
+module.exports = LinkedList;
