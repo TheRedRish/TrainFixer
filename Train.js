@@ -47,64 +47,84 @@ class Train {
         // Iterate through the train
         // Starting at the second car since front has already been checked above
         let current = this.train.head.next;
-        do {
-            if (TrainCart.passengerTypes.includes(current.value.type)) {
-                // Passenger cars: Must be placed in front of all freight cars.
-                // Freight cars: Must be placed behind all passenger cars.
-                if (freightCount > 0) {
-                    return false;
-                }
+        while (current) {
+            const type = current.value.type;
 
-                if (current.value.type === "sleeping") {
+            switch (type) {
+                case "sleeping":
+                    // Sleeping cars: If there is more than one sleeping car on the train,
+                    // they must be placed consecutively.
                     if (sleepingCount > 0 && !countingSleeping) {
-                        // Sleeping cars: If there is more than one sleeping car on the train, they must be placed consecutively. Stopped counting sleeping, so it is not consecutive
                         return false;
                     }
 
                     if (seatingCount > 0) {
-                        //Dining cars: If there is a dining car, it must be possible to reach it from all seating cars without passing through a sleeping car.
+                        // Dining cars: If there is a dining car, it must be possible to reach it
+                        // from all seating cars without passing through a sleeping car.
                         // This will be used if there are dining carts after the sleeping cart
                         seatingBeforeSleeping = true;
                     }
 
                     if (diningCount > 0) {
-                        //Dining cars: If there is a dining car, it must be possible to reach it from all seating cars without passing through a sleeping car.
-                        // This will be used if there are dining carts before the sleeping cart
+                        // Dining cars: If there is a dining car, it must be possible to reach it
+                        // from all seating cars without passing through a sleeping car.
+                        // This will be used if there are seating carts after the sleeping cart
                         diningBeforeSleeping = true;
                     }
 
                     // Start counting sleeping
                     countingSleeping = true;
                     sleepingCount++;
-                } else if (current.value.type === "dining") {
-                    //Dining cars: If there is a dining car, it must be possible to reach it from all seating cars without passing through a sleeping car.
+                    break;
+
+                case "dining":
+                    // Dining cars: If there is a dining car, it must be possible to reach it
+                    // from all seating cars without passing through a sleeping car.
                     if (seatingBeforeSleeping) {
-                        // There are seating carts before the sleeping carts, therefor must pass through sleeping to reach dining
+                        // There are seating carts before the sleeping carts,
+                        // therefore must pass through sleeping to reach dining
                         return false;
                     }
                     diningCount++;
                     countingSleeping = false;
-                } else if (current.value.type === "seating") {
+                    break;
+
+                case "seating":
                     // Seating cars: No special rules
                     if (diningBeforeSleeping) {
-                        // There are dining carts before the sleeping carts, therefor must pass through sleeping to reach dining
+                        // There are dining carts before the sleeping carts,
+                        // therefore must pass through sleeping to reach dining
                         return false;
                     }
                     seatingCount++;
                     countingSleeping = false;
-                }
-            } else if (
-                current.value.type === "locomotive" &&
-                current !== this.train.tail
-            ) {
-                // Locomotive: Must be at the front or the rear of the train. Here it is in the middle
+                    break;
+
+                case "freight":
+                    // Freight cars: Must be placed behind all passenger cars.
+                    freightCount++;
+                    break;
+
+                case "locomotive":
+                    // Locomotive: Must be at the front or the rear of the train.
+                    if (current !== this.train.tail) {
+                        // Here it is in the middle
+                        return false;
+                    }
+                    break;
+
+                default:
+                    // Should not happen since TrainCart validates type
+                    throw new Error(`Unknown cart type: ${type}`);
+            }
+
+            // Passenger cars: Must be placed in front of all freight cars.
+            if (TrainCart.passengerTypes.includes(type) && freightCount > 0) {
                 return false;
-            } else if (current.value.type === "freight") {
-                freightCount++;
             }
 
             current = current.next;
-        } while (current !== null);
+        }
 
         return true;
     }
