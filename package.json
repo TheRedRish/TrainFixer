@@ -1,8 +1,7 @@
 {
   "type": "module",
   "scripts": {
-    "test": "jest",
-    "test:debug": "DEBUG_TRAIN=1 jest"
+    "test": "jest"
   },
   "devDependencies": {
     "jest": "^29.7.0"
