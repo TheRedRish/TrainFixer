@@ -164,7 +164,7 @@ class Train {
 
         // append tail locomotive if needed (uses your existing addCart)
         if (this.train.size > 10) {
-            this.addCart(new TrainCart("locomotive"));
+            this.train.append(new TrainCart("locomotive"));
         }
     }
 }
