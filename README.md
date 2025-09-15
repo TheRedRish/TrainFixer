@@ -1,3 +1,5 @@
+Rune - RUHA0001
+
 Kort instruktion – kør tests
 
 Installer og kør:
