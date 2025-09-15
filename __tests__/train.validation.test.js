@@ -9,7 +9,7 @@ const buildTrain = (types) => {
     return tr;
 };
 
-describe("Train rules", () => {
+describe("Train_rules", () => {
     //
     // LOCOMOTIVES
     //
@@ -280,6 +280,16 @@ describe("Train rules", () => {
                 "locomotive",
             ];
             const tr = buildTrain(types);
+            expect(tr.isValid()).toBe(true);
+        });
+
+        test("Single car train is valid", () => {
+            const tr = buildTrain(["locomotive"]);
+            expect(tr.isValid()).toBe(true);
+        });
+
+        test("Two car train is valid", () => {
+            const tr = buildTrain(["locomotive", "seating"]);
             expect(tr.isValid()).toBe(true);
         });
     });

@@ -17,7 +17,7 @@ class LinkedList {
      * Increments the size of the list.
      * @param {any} value - The value to be added to the linked list.
      */
-    add(value) {
+    append(value) {
         const newNode = new Node(value);
         this.size++;
         if (this.head === null) {
@@ -29,49 +29,53 @@ class LinkedList {
         }
     }
 
-    /**
-     * Swaps two nodes in the linked list.
-     * Updates the next properties of the two nodes and their neighbours.
-     * Also updates the head and tail properties if either of the nodes being swapped is the head or tail.
-     * @param {Node} node1 - The first node to be swapped.
-     * @param {Node} node2 - The second node to be swapped.
-     */
-    swapNodes(node1, node2) {
-        const node1Next = node1.next;
-        node1.next = node2.next;
-        node2.next = node1Next;
-
-        // Update the head and tail if necessary
-        if (node1 === this.head) {
-            this.head = node2;
-        } else if (node2 === this.head) {
-            this.head = node1;
-        }
-        if (node1 === this.tail) {
-            this.tail = node2;
-        } else if (node2 === this.tail) {
-            this.tail = node1;
-        }
+    prepend(value) {
+        const node = new Node(value);
+        node.next = this.head;
+        this.head = node;
+        if (this.size === 0) this.tail = node;
+        this.size++;
     }
 
-    /**
-     * Removes the first occurrence of a node that satisfies the given callback function from the linked list.
-     * Iterates through the list and checks if the callback function returns true for the next node.
-     * If a match is found, the next node is skipped and the size of the list is decremented.
-     * @param {function} itemValidator - A function that takes a node and returns true if the node should be removed.
-     * @returns {boolean|null} - True if a node was found and removed, null if no match was found.
-     */
-    removeItemByValidator(itemValidator) {
-        let current = this.head;
-        while (current.next !== null) {
-            if (itemValidator(current.next)) {
-                current.next = current.next.next;
-                this.size--;
-                return true;
-            }
-            current = current.next;
+    removeNode(nodeToRemove, nodePrev) {
+        if (nodeToRemove === null) return; // nothing to do
+
+        if (nodePrev === null) {
+            // nodeToRemove is head
+            this.head = nodeToRemove.next;
+        } else {
+            nodePrev.next = nodeToRemove.next;
         }
-        return null;
+
+        if (nodeToRemove === this.tail) {
+            this.tail = nodePrev;
+        }
+
+        this.size--;
+    }
+
+    moveAfterPointer(node, nodePrev, pointer) {
+        if (node === pointer) return; // nothing to do
+
+        // unlink node from its current position
+        if (nodePrev) {
+            nodePrev.next = node.next;
+        } else {
+            // node was head
+            this.head = node.next;
+        }
+
+        // insert node after pointer
+        node.next = pointer.next;
+        pointer.next = node;
+
+        // update tail if needed
+        if (this.tail === node) {
+            this.tail = nodePrev; // old prev becomes new tail if node was tail
+        }
+        if (this.tail === pointer) {
+            this.tail = node; // if inserting after old tail, node becomes new tail
+        }
     }
 
     /**
@@ -138,4 +142,4 @@ class Node {
     }
 }
 
-module.exports = LinkedList;
+module.exports = { LinkedList, Node };

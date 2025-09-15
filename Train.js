@@ -1,4 +1,4 @@
-const LinkedList = require("./LinkedList.js");
+const { LinkedList } = require("./LinkedList.js");
 
 class Train {
     constructor() {
@@ -6,7 +6,7 @@ class Train {
     }
 
     addCart(cart) {
-        this.train.add(cart);
+        this.train.append(cart);
     }
 
     // Rules
@@ -23,6 +23,8 @@ class Train {
         // Locomotives: // For trains with 10 or fewer cars, the only valid position is as the front car. // For trains with more than 10 cars, there MUST be a locomotive both at the front and at the rear.
         const headType = this.train.head?.value?.type;
         const tailType = this.train.tail?.value?.type;
+
+        if (total === 1 && headType === "locomotive") return true;
         if (
             (total <= 10 && headType !== "locomotive") ||
             (total <= 10 && tailType === "locomotive")
@@ -106,6 +108,64 @@ class Train {
         }
 
         return true;
+    }
+
+    sort() {
+        if (this.train.size <= 1) return;
+
+        let pointerLastBeforeFreight = this.train.tail;
+        let pointerLastBeforeSleeping = this.train.tail;
+
+        let currentNode = this.train.head;
+        let previousNode = null;
+
+        const length = this.train.size;
+        for (let i = 0; i < length; i++) {
+            const nextNode = currentNode.next;
+            const currentType = currentNode.value.type;
+            switch (currentType) {
+                case "freight":
+                    this.train.moveAfterPointer(
+                        currentNode,
+                        previousNode,
+                        this.train.tail
+                    );
+                    // NOTE: moved currentNode away; do NOT advance previousNode
+                    break;
+                case "sleeping":
+                    this.train.moveAfterPointer(
+                        currentNode,
+                        previousNode,
+                        pointerLastBeforeFreight
+                    );
+                    pointerLastBeforeFreight = currentNode;
+                    break;
+                case "seating":
+                    previousNode = currentNode;
+                    break;
+                case "dining":
+                    this.train.moveAfterPointer(
+                        currentNode,
+                        previousNode,
+                        pointerLastBeforeSleeping
+                    );
+                    pointerLastBeforeSleeping = currentNode;
+                    break;
+                case "locomotive":
+                    this.train.removeNode(currentNode, previousNode);
+                    break;
+            }
+
+            currentNode = nextNode;
+        }
+
+        // prepend head locomotive (uses LinkedList.prepend; does not touch size directly)
+        this.train.prepend(new TrainCart("locomotive"));
+
+        // append tail locomotive if needed (uses your existing addCart)
+        if (this.train.size > 10) {
+            this.addCart(new TrainCart("locomotive"));
+        }
     }
 }
 
