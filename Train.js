@@ -17,32 +17,39 @@ class Train {
     // Dining cars: If there is a dining car, it must be possible to reach it from all seating cars without passing through a sleeping car.
 
     isValid() {
-        const total = this.train.size; // FIX: use this.train
+        const total = this.train.size;
         if (total === 0) return false;
 
         // Locomotives: // For trains with 10 or fewer cars, the only valid position is as the front car. // For trains with more than 10 cars, there MUST be a locomotive both at the front and at the rear.
+        const headType = this.train.head?.value?.type;
+        const tailType = this.train.tail?.value?.type;
         if (
-            (this.train.size <= 10 &&
-                this.train.head.value.type !== "locomotive") ||
-            (this.train.size <= 10 &&
-                this.train.tail.value.type === "locomotive")
+            (total <= 10 && headType !== "locomotive") ||
+            (total <= 10 && tailType === "locomotive")
         ) {
             return false;
         } else if (
-            this.train.size > 10 &&
-            (this.train.head.value.type !== "locomotive" ||
-                this.train.tail.value.type !== "locomotive")
+            total > 10 &&
+            (headType !== "locomotive" || tailType !== "locomotive")
         ) {
             return false;
         }
 
-        let seatingCount = 0;
-        let seatingBeforeSleeping = false;
-        let diningBeforeSleeping = false;
+        // State for linear-time validation
+        let freightSeen = false;
+
+        // Sleeping cars: If there is more than one sleeping car on the train,
+        // they must be placed consecutively.
         let sleepingCount = 0;
-        let countingSleeping = false;
-        let diningCount = 0;
-        let freightCount = 0;
+        let inSleepingRun = false;
+
+        // Dining cars: If there is a dining car, it must be possible to reach it
+        // from all seating cars without passing through a sleeping car.
+        // (Forbid seating→sleeping→dining and dining→sleeping→seating patterns)
+        let seenSeating = false;
+        let seenDining = false;
+        let seenSeatingBeforeSleeping = false;
+        let seenDiningBeforeSleeping = false;
 
         // Iterate through the train
         // Starting at the second car since front has already been checked above
@@ -52,59 +59,35 @@ class Train {
 
             switch (type) {
                 case "sleeping":
-                    // Sleeping cars: If there is more than one sleeping car on the train,
-                    // they must be placed consecutively.
-                    if (sleepingCount > 0 && !countingSleeping) {
-                        return false;
-                    }
-
-                    if (seatingCount > 0) {
-                        // Dining cars: If there is a dining car, it must be possible to reach it
-                        // from all seating cars without passing through a sleeping car.
-                        // This will be used if there are dining carts after the sleeping cart
-                        seatingBeforeSleeping = true;
-                    }
-
-                    if (diningCount > 0) {
-                        // Dining cars: If there is a dining car, it must be possible to reach it
-                        // from all seating cars without passing through a sleeping car.
-                        // This will be used if there are seating carts after the sleeping cart
-                        diningBeforeSleeping = true;
-                    }
-
-                    // Start counting sleeping
-                    countingSleeping = true;
+                    // Sleeping cars: must be consecutive if there is more than one.
+                    if (sleepingCount > 0 && !inSleepingRun) return false;
                     sleepingCount++;
+                    inSleepingRun = true;
+
+                    // Track patterns for dining reachability
+                    if (seenSeating) seenSeatingBeforeSleeping = true;
+                    if (seenDining) seenDiningBeforeSleeping = true;
                     break;
 
                 case "dining":
-                    // Dining cars: If there is a dining car, it must be possible to reach it
-                    // from all seating cars without passing through a sleeping car.
-                    if (seatingBeforeSleeping) {
-                        // There are seating carts before the sleeping carts,
-                        // therefore must pass through sleeping to reach dining
-                        return false;
-                    }
-                    diningCount++;
-                    countingSleeping = false;
+                    // Dining cars: reachable from all seating without crossing sleeping
+                    if (seenSeatingBeforeSleeping) return false; // seating → sleeping → dining
+                    seenDining = true;
+                    inSleepingRun = false;
                     break;
 
                 case "seating":
-                    // Seating cars: No special rules
-                    if (diningBeforeSleeping) {
-                        // There are dining carts before the sleeping carts,
-                        // therefore must pass through sleeping to reach dining
-                        return false;
-                    }
-                    seatingCount++;
-                    countingSleeping = false;
+                    // Seating cars: No special rules (besides passenger/freight order and dining reachability)
+                    if (seenDiningBeforeSleeping) return false; // dining → sleeping → seating
+                    seenSeating = true;
+                    inSleepingRun = false;
                     break;
 
                 case "freight":
                     // Freight cars: Must be placed behind all passenger cars.
-                    freightCount++;
+                    freightSeen = true;
+                    inSleepingRun = false;
                     break;
-
                 case "locomotive":
                     // Locomotive: Must be at the front or the rear of the train.
                     if (current !== this.train.tail) {
@@ -112,14 +95,10 @@ class Train {
                         return false;
                     }
                     break;
-
-                default:
-                    // Should not happen since TrainCart validates type
-                    throw new Error(`Unknown cart type: ${type}`);
             }
 
             // Passenger cars: Must be placed in front of all freight cars.
-            if (TrainCart.passengerTypes.includes(type) && freightCount > 0) {
+            if (TrainCart.passengerTypes.includes(type) && freightSeen) {
                 return false;
             }
 
